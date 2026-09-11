@@ -1,5 +1,17 @@
 const config = {
     // =========================
+    // ADMIN / CUSTOMIZATION
+    // =========================
+    admin: {
+        enabled: true,
+        // Change this passcode before publishing.
+        // NOTE: On a static site this is a UI lock, not server-side security.
+        passcode: "CHANGE-ME-1234",
+        shortcut: "Ctrl+Shift+A"
+    },
+
+
+    // =========================
     // PROFILE
     // =========================
     profile: {
@@ -12,6 +24,8 @@ const config = {
         status: "Online",
         statusText: "Building something cool",
         location: "Vietnam",
+        availability: "Available for interesting projects",
+        tagline: "Developer • Discord Bot • Automation",
 
         bio: [
             "👋 Xin chào, mình là Khánh.",
@@ -20,7 +34,12 @@ const config = {
             "🎮 Discord • Minecraft • Automation"
         ],
 
-        quote: "Code. Create. Repeat."
+        quote: "Code. Create. Repeat.",
+        stats: {
+            projects: "10+",
+            experience: "Building",
+            focus: "Automation"
+        }
     },
 
     // =========================

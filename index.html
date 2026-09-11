@@ -157,6 +157,7 @@
                 <a href="#about">About</a>
                 <a href="#skills">Skills</a>
                 <a href="#projects">Projects</a>
+                <a href="#contact">Contact</a>
 
             </div>
 
@@ -174,6 +175,7 @@
                     class="icon-button"
                     id="muteButton"
                     title="Mute"
+                    aria-label="Mute or unmute music"
                 >
                     <i class="fa-solid fa-volume-high"></i>
                 </button>
@@ -272,6 +274,12 @@
                     Developer & Discord Bot Developer
                 </p>
 
+
+                <div class="hero-chips" aria-label="Focus areas">
+                    <span><i class="fa-solid fa-terminal"></i> Full-stack mindset</span>
+                    <span><i class="fa-brands fa-discord"></i> Discord automation</span>
+                    <span><i class="fa-solid fa-cubes"></i> Minecraft</span>
+                </div>
 
                 <div class="hero-buttons">
 
@@ -424,6 +432,17 @@
                             Vietnam
                         </span>
 
+                    </div>
+
+                    <div class="profile-actions">
+                        <button class="mini-button" id="copyDiscord" type="button">
+                            <i class="fa-regular fa-copy"></i>
+                            Copy Discord
+                        </button>
+                        <a class="mini-button" id="discordButton" href="https://discord.com/" target="_blank" rel="noopener noreferrer">
+                            <i class="fa-brands fa-discord"></i>
+                            Open Discord
+                        </a>
                     </div>
 
                 </article>
@@ -724,11 +743,45 @@
             </div>
 
 
+            <div class="project-toolbar reveal">
+                <div class="project-filter" id="projectFilter">
+                    <button class="filter-button active" data-filter="all" type="button">All</button>
+                    <button class="filter-button" data-filter="Python" type="button">Python</button>
+                    <button class="filter-button" data-filter="JavaScript" type="button">JavaScript</button>
+                    <button class="filter-button" data-filter="Other" type="button">Other</button>
+                </div>
+                <span class="project-count" id="projectCount">0 projects</span>
+            </div>
+
             <div
                 class="projects-grid"
                 id="projectsGrid"
             ></div>
 
+        </section>
+
+
+        <!-- =====================================
+             CONTACT / CTA
+        ====================================== -->
+
+        <section id="contact" class="section contact-section">
+            <div class="contact-card glass-card reveal">
+                <div class="contact-glow"></div>
+                <div class="contact-copy">
+                    <span class="section-label">LET'S BUILD SOMETHING</span>
+                    <h2>Have an idea?<br><span>Let's make it real.</span></h2>
+                    <p>From Discord bots to automation and web experiences, I'm always interested in building useful things.</p>
+                </div>
+                <div class="contact-actions">
+                    <a class="primary-button" href="https://github.com/trongkhanh49" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-github"></i> Start with GitHub
+                    </a>
+                    <button class="secondary-button" id="copyDiscordCta" type="button">
+                        <i class="fa-regular fa-copy"></i> Copy Discord
+                    </button>
+                </div>
+            </div>
         </section>
 
 
@@ -868,6 +921,21 @@
          TOAST
     ====================================== -->
 
+    <button id="backTop" class="back-top" type="button" aria-label="Back to top">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <div class="music-mini glass-card" id="musicMini">
+        <div class="mini-disc" id="miniDisc"></div>
+        <div class="mini-track">
+            <strong id="miniTitle">My Favorite Song</strong>
+            <span id="miniArtist">Khánh Nguyễn</span>
+        </div>
+        <button id="miniPlay" type="button" aria-label="Play or pause music">
+            <i class="fa-solid fa-play"></i>
+        </button>
+    </div>
+
     <div id="toast">
 
         <i class="fa-solid fa-circle-check"></i>
@@ -881,6 +949,106 @@
 
     <script src="config.js"></script>
     <script src="script.js"></script>
+
+
+    <!-- =====================================
+         ADMIN CUSTOMIZER
+         Client-side UI lock. For real security,
+         connect this editor to a backend/auth system.
+    ====================================== -->
+
+    <div id="adminPanel" class="admin-panel" aria-hidden="true">
+        <div class="admin-backdrop" data-admin-close></div>
+
+        <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+            <div class="admin-header">
+                <div>
+                    <span class="admin-eyebrow">PRIVATE CONTROL CENTER</span>
+                    <h2 id="adminTitle">Website Admin</h2>
+                    <p>Chỉnh toàn bộ cấu hình website bằng JSON. Mọi thay đổi được lưu trên trình duyệt này.</p>
+                </div>
+                <button class="admin-close" id="adminClose" aria-label="Đóng admin">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="adminLogin" class="admin-login">
+                <div class="admin-login-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Admin authentication</h3>
+                <p>Nhập mã admin để mở quyền chỉnh sửa.</p>
+                <div class="admin-login-row">
+                    <input id="adminPasscode" type="password" autocomplete="current-password" placeholder="Admin passcode">
+                    <button id="adminLoginBtn" class="admin-primary">Unlock</button>
+                </div>
+                <small id="adminLoginError" class="admin-error" role="alert"></small>
+                <p class="admin-security-note">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Đây là lớp khóa giao diện phía trình duyệt. Không dùng nó để bảo vệ dữ liệu bí mật hoặc quyền quản trị thật.
+                </p>
+            </div>
+
+            <div id="adminEditor" class="admin-editor" hidden>
+                <div class="admin-toolbar">
+                    <div class="admin-status">
+                        <span class="admin-dot"></span>
+                        <span id="adminStatusText">Admin mode</span>
+                    </div>
+                    <div class="admin-actions">
+                        <button id="adminFormat" class="admin-secondary"><i class="fa-solid fa-wand-magic-sparkles"></i> Format</button>
+                        <button id="adminImport" class="admin-secondary"><i class="fa-solid fa-file-import"></i> Import</button>
+                        <button id="adminExport" class="admin-secondary"><i class="fa-solid fa-download"></i> Export</button>
+                        <button id="adminReset" class="admin-danger"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                        <button id="adminSave" class="admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save & Apply</button>
+                    </div>
+                </div>
+
+                <div class="admin-help">
+                    <span><i class="fa-solid fa-circle-info"></i> Có thể sửa profile, social, skills, projects, terminal, music, background, effects và mọi key khác trong config.</span>
+                    <span>Shortcut: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd></span>
+                </div>
+
+                <textarea id="adminJson" spellcheck="false" aria-label="Website configuration JSON"></textarea>
+                <input id="adminFileInput" type="file" accept=".json,application/json" hidden>
+
+                <div class="admin-footer">
+                    <span>Local overrides: <strong id="adminLocalState">enabled</strong></span>
+                    <button id="adminLock" class="admin-secondary"><i class="fa-solid fa-lock"></i> Lock admin</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <button id="adminLauncher" class="admin-launcher" type="button" title="Open Admin (Ctrl+Shift+A)" aria-label="Open Admin">
+        <i class="fa-solid fa-sliders"></i>
+    </button>
+
+
+    <!-- V3 interactive layer: command palette, mobile dock, toast area -->
+    <div id="siteCommandPalette" class="site-command-palette" aria-hidden="true">
+        <div class="site-command-backdrop" data-command-close></div>
+        <div class="site-command-modal" role="dialog" aria-modal="true" aria-label="Command palette">
+            <div class="site-command-search">
+                <i class="fa-solid fa-terminal"></i>
+                <input id="siteCommandInput" type="search" placeholder="Search sections, projects, commands..." autocomplete="off">
+                <kbd>ESC</kbd>
+            </div>
+            <div id="siteCommandResults" class="site-command-results"></div>
+            <div class="site-command-footer">Enter to open · ↑↓ navigate · Ctrl/⌘ + K to search</div>
+        </div>
+    </div>
+
+    <div id="siteScrollProgress" class="site-scroll-progress"></div>
+
+    <nav id="mobileDock" class="mobile-dock" aria-label="Mobile navigation">
+        <button data-dock-action="home"><i class="fa-solid fa-house"></i><span>Home</span></button>
+        <button data-dock-action="projects"><i class="fa-solid fa-code"></i><span>Projects</span></button>
+        <button data-dock-action="music"><i class="fa-solid fa-music"></i><span>Music</span></button>
+        <button data-dock-action="top"><i class="fa-solid fa-arrow-up"></i><span>Top</span></button>
+    </nav>
+
+    <div id="siteOfflineBadge" class="site-offline-badge" hidden>
+        <i class="fa-solid fa-wifi"></i><span>Offline mode</span>
+    </div>
 
 </body>
 

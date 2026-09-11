@@ -234,6 +234,13 @@ function loadConfig() {
         card.className =
             "project-card reveal tilt";
 
+        card.dataset.language =
+            project.language === "Python"
+                ? "Python"
+                : project.language === "JavaScript"
+                    ? "JavaScript"
+                    : "Other";
+
         card.innerHTML = `
             <div class="project-icon">
                 ${project.icon}
@@ -1427,3 +1434,658 @@ document.addEventListener(
     },
     true
 );
+
+/* =========================================================
+   V2 EXPERIENCE LAYER
+========================================================= */
+
+(() => {
+    const onReady = (fn) => {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fn, { once: true });
+        } else {
+            fn();
+        }
+    };
+
+    onReady(() => {
+        setupProjectFiltersV2();
+        setupActiveNavV2();
+        setupBackTopV2();
+        setupDiscordCopyV2();
+        setupMiniPlayerV2();
+        setupScrollProgressV2();
+        setupSpotlightCardsV2();
+        setupImageFallbackV2();
+        document.body.classList.add("experience-v2");
+    });
+
+    function setupProjectFiltersV2() {
+        const grid = document.querySelector("#projectsGrid");
+        const filter = document.querySelector("#projectFilter");
+        const count = document.querySelector("#projectCount");
+        if (!grid || !filter) return;
+
+        const buttons = [...filter.querySelectorAll(".filter-button")];
+
+        const render = (value) => {
+            const cards = [...grid.querySelectorAll(".project-card")];
+            let shown = 0;
+            cards.forEach((card) => {
+                const language = card.dataset.language || "Other";
+                const visible = value === "all" || language === value;
+                card.hidden = !visible;
+                if (visible) shown++;
+            });
+            if (count) count.textContent = `${shown} project${shown === 1 ? "" : "s"}`;
+        };
+
+        buttons.forEach((button) => {
+            button.addEventListener("click", () => {
+                buttons.forEach((b) => b.classList.remove("active"));
+                button.classList.add("active");
+                render(button.dataset.filter);
+            });
+        });
+
+        // Existing cards are generated before this layer initializes.
+        [...grid.querySelectorAll(".project-card")].forEach((card, i) => {
+            const project = config.projects[i];
+            card.dataset.language = project?.language === "Python"
+                ? "Python"
+                : project?.language === "JavaScript"
+                    ? "JavaScript"
+                    : "Other";
+        });
+        render("all");
+    }
+
+    function setupActiveNavV2() {
+        const links = [...document.querySelectorAll(".nav-links a[href^='#']")];
+        const sections = links
+            .map((link) => document.querySelector(link.getAttribute("href")))
+            .filter(Boolean);
+
+        const update = () => {
+            const marker = window.scrollY + window.innerHeight * 0.32;
+            let current = sections[0]?.id;
+            sections.forEach((section) => {
+                if (section.offsetTop <= marker) current = section.id;
+            });
+            links.forEach((link) => {
+                link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === `#${current}`
+                );
+            });
+        };
+
+        window.addEventListener("scroll", update, { passive: true });
+        update();
+    }
+
+    function setupBackTopV2() {
+        const button = document.querySelector("#backTop");
+        if (!button) return;
+
+        const update = () => button.classList.toggle("show", window.scrollY > 700);
+        window.addEventListener("scroll", update, { passive: true });
+        button.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+        update();
+    }
+
+    function setupDiscordCopyV2() {
+        const copy = async () => {
+            const username = config.discord?.username || config.profile?.username || "";
+            try {
+                await navigator.clipboard.writeText(username);
+                showToast(`Copied Discord: ${username}`);
+            } catch {
+                showToast("Copy failed — please copy it manually.");
+            }
+        };
+
+        ["#copyDiscord", "#copyDiscordCta"].forEach((selector) => {
+            document.querySelector(selector)?.addEventListener("click", copy);
+        });
+
+        const discordButton = document.querySelector("#discordButton");
+        if (discordButton && config.discord?.invite) {
+            discordButton.href = config.discord.invite;
+        }
+    }
+
+    function setupMiniPlayerV2() {
+        const mini = document.querySelector("#musicMini");
+        const miniPlay = document.querySelector("#miniPlay");
+        const miniTitle = document.querySelector("#miniTitle");
+        const miniArtist = document.querySelector("#miniArtist");
+        const miniDisc = document.querySelector("#miniDisc");
+        if (!mini || !miniPlay) return;
+
+        if (config.music?.title) miniTitle.textContent = config.music.title;
+        if (config.music?.artist) miniArtist.textContent = config.music.artist;
+        if (config.music?.cover) miniDisc.style.backgroundImage = `url("${config.music.cover}")`;
+
+        const sync = () => {
+            const playing = document.body.classList.contains("music-playing");
+            mini.classList.toggle("playing", playing);
+            miniPlay.innerHTML = playing
+                ? '<i class="fa-solid fa-pause"></i>'
+                : '<i class="fa-solid fa-play"></i>';
+        };
+
+        miniPlay.addEventListener("click", () => {
+            document.querySelector("#musicPlay")?.click();
+            setTimeout(sync, 50);
+        });
+
+        setInterval(sync, 700);
+        sync();
+    }
+
+    function setupScrollProgressV2() {
+        const bar = document.createElement("div");
+        bar.className = "scroll-progress";
+        bar.innerHTML = "<span></span>";
+        document.body.appendChild(bar);
+
+        const fill = bar.firstElementChild;
+        const update = () => {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            fill.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
+        };
+        window.addEventListener("scroll", update, { passive: true });
+        update();
+    }
+
+    function setupSpotlightCardsV2() {
+        const selector = ".glass-card, .social-card, .skill-card, .project-card";
+        document.addEventListener("pointermove", (event) => {
+            document.querySelectorAll(selector).forEach((card) => {
+                const rect = card.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                card.style.setProperty("--mx", `${x}px`);
+                card.style.setProperty("--my", `${y}px`);
+            });
+        }, { passive: true });
+    }
+
+    function setupImageFallbackV2() {
+        document.querySelectorAll("img").forEach((img) => {
+            img.addEventListener("error", () => img.classList.add("image-missing"), { once: true });
+        });
+    }
+})();
+
+
+/* =========================================================
+   ADMIN CUSTOMIZER
+========================================================= */
+
+const ADMIN_STORAGE_KEY = "bio_admin_config_v1";
+const ADMIN_AUTH_KEY = "bio_admin_unlocked_v1";
+
+function getBaseConfig() {
+    try {
+        return JSON.parse(JSON.stringify(config));
+    } catch (error) {
+        return {};
+    }
+}
+
+function getEffectiveConfig() {
+    const base = getBaseConfig();
+
+    try {
+        const saved = localStorage.getItem(ADMIN_STORAGE_KEY);
+        if (!saved) return base;
+
+        const parsed = JSON.parse(saved);
+        return deepMerge(base, parsed);
+    } catch (error) {
+        console.warn("Admin config could not be loaded.", error);
+        return base;
+    }
+}
+
+function deepMerge(target, source) {
+    if (!source || typeof source !== "object" || Array.isArray(source)) {
+        return source;
+    }
+
+    Object.keys(source).forEach((key) => {
+        const value = source[key];
+
+        if (
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value) &&
+            target[key] &&
+            typeof target[key] === "object" &&
+            !Array.isArray(target[key])
+        ) {
+            target[key] = deepMerge(target[key], value);
+        } else {
+            target[key] = value;
+        }
+    });
+
+    return target;
+}
+
+function applyAdminConfig() {
+    const effective = getEffectiveConfig();
+
+    // Make the runtime config editable without rebuilding the site.
+    Object.keys(config).forEach((key) => delete config[key]);
+    Object.assign(config, effective);
+
+    loadConfig();
+
+    if (typeof setupMusic === "function") {
+        try {
+            setupMusic();
+        } catch (error) {
+            console.warn("Music refresh skipped.", error);
+        }
+    }
+
+    if (typeof setupBackgroundButton === "function") {
+        try {
+            setupBackgroundButton();
+        } catch (error) {
+            console.warn("Background refresh skipped.", error);
+        }
+    }
+}
+
+function setupAdmin() {
+    const panel = $("#adminPanel");
+    const launcher = $("#adminLauncher");
+    const close = $("#adminClose");
+    const login = $("#adminLogin");
+    const editor = $("#adminEditor");
+    const passcode = $("#adminPasscode");
+    const loginButton = $("#adminLoginBtn");
+    const loginError = $("#adminLoginError");
+    const jsonEditor = $("#adminJson");
+    const saveButton = $("#adminSave");
+    const resetButton = $("#adminReset");
+    const formatButton = $("#adminFormat");
+    const importButton = $("#adminImport");
+    const exportButton = $("#adminExport");
+    const fileInput = $("#adminFileInput");
+    const lockButton = $("#adminLock");
+
+    if (!panel || !launcher) return;
+
+    const configuredPasscode = () =>
+        config.admin && config.admin.passcode
+            ? String(config.admin.passcode)
+            : "CHANGE-ME-1234";
+
+    const openPanel = () => {
+        panel.classList.add("is-open");
+        panel.setAttribute("aria-hidden", "false");
+        document.body.classList.add("admin-open");
+
+        const unlockedNow = sessionStorage.getItem(ADMIN_AUTH_KEY) === "1";
+
+        if (unlockedNow) {
+            login.hidden = true;
+            editor.hidden = false;
+            jsonEditor.value = JSON.stringify(getEffectiveConfig(), null, 2);
+            setTimeout(() => jsonEditor.focus(), 50);
+        } else {
+            login.hidden = false;
+            editor.hidden = true;
+            loginError.textContent = "";
+            passcode.value = "";
+            setTimeout(() => passcode.focus(), 50);
+        }
+    };
+
+    const closePanel = () => {
+        panel.classList.remove("is-open");
+        panel.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("admin-open");
+    };
+
+    const unlock = () => {
+        if (passcode.value === configuredPasscode()) {
+            sessionStorage.setItem(ADMIN_AUTH_KEY, "1");
+            login.hidden = true;
+            editor.hidden = false;
+            loginError.textContent = "";
+            jsonEditor.value = JSON.stringify(getEffectiveConfig(), null, 2);
+            showToast("Admin unlocked");
+            setTimeout(() => jsonEditor.focus(), 50);
+        } else {
+            loginError.textContent = "Sai mã admin.";
+            passcode.select();
+        }
+    };
+
+    const save = () => {
+        try {
+            const parsed = JSON.parse(jsonEditor.value);
+
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+                throw new Error("Config must be a JSON object.");
+            }
+
+            // Admin credentials are kept in the base config and are not replaced
+            // by accidental edits to the saved override.
+            const safeConfig = JSON.parse(JSON.stringify(parsed));
+            if (!safeConfig.admin) {
+                safeConfig.admin = getBaseConfig().admin || {
+                    enabled: true,
+                    passcode: "CHANGE-ME-1234",
+                    shortcut: "Ctrl+Shift+A"
+                };
+            }
+
+            localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(safeConfig));
+            applyAdminConfig();
+            jsonEditor.value = JSON.stringify(getEffectiveConfig(), null, 2);
+
+            showToast("Đã lưu & áp dụng cấu hình");
+        } catch (error) {
+            showToast("JSON không hợp lệ: " + error.message);
+        }
+    };
+
+    const reset = () => {
+        if (!confirm("Reset toàn bộ thay đổi admin trên trình duyệt này?")) return;
+
+        localStorage.removeItem(ADMIN_STORAGE_KEY);
+        applyAdminConfig();
+        jsonEditor.value = JSON.stringify(getEffectiveConfig(), null, 2);
+        showToast("Đã reset về cấu hình gốc");
+    };
+
+    const format = () => {
+        try {
+            jsonEditor.value = JSON.stringify(JSON.parse(jsonEditor.value), null, 2);
+            showToast("Đã format JSON");
+        } catch (error) {
+            showToast("Không thể format: JSON không hợp lệ");
+        }
+    };
+
+    const exportConfig = () => {
+        const blob = new Blob([JSON.stringify(getEffectiveConfig(), null, 2)], {
+            type: "application/json"
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "bio-admin-config.json";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const importConfig = () => fileInput.click();
+
+    const lock = () => {
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
+        closePanel();
+        showToast("Admin đã khóa");
+    };
+
+    launcher.addEventListener("click", openPanel);
+    close?.addEventListener("click", closePanel);
+    panel.querySelector("[data-admin-close]")?.addEventListener("click", closePanel);
+    loginButton?.addEventListener("click", unlock);
+    saveButton?.addEventListener("click", save);
+    resetButton?.addEventListener("click", reset);
+    formatButton?.addEventListener("click", format);
+    exportButton?.addEventListener("click", exportConfig);
+    importButton?.addEventListener("click", importConfig);
+    lockButton?.addEventListener("click", lock);
+
+    passcode?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") unlock();
+    });
+
+    fileInput?.addEventListener("change", () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            jsonEditor.value = String(reader.result || "");
+            showToast("Đã import. Kiểm tra rồi bấm Save & Apply.");
+        };
+        reader.readAsText(file);
+        fileInput.value = "";
+    });
+
+    document.addEventListener("keydown", (event) => {
+        const shortcut = (config.admin?.shortcut || "Ctrl+Shift+A").toLowerCase();
+
+        if (
+            shortcut.includes("ctrl") &&
+            shortcut.includes("shift") &&
+            event.ctrlKey &&
+            event.shiftKey &&
+            event.key.toLowerCase() === "a"
+        ) {
+            event.preventDefault();
+            openPanel();
+        }
+
+        if (event.key === "Escape" && panel.classList.contains("is-open")) {
+            closePanel();
+        }
+    });
+
+    if (config.admin?.enabled === false) {
+        launcher.hidden = true;
+    }
+
+    // Apply saved admin overrides as early as possible.
+    if (localStorage.getItem(ADMIN_STORAGE_KEY)) {
+        applyAdminConfig();
+    }
+}
+
+// Initialize admin after the normal page boot sequence.
+document.addEventListener("DOMContentLoaded", setupAdmin);
+
+
+/* =========================================================
+   BIO V3 — INTERACTION ENGINE
+   PC + mobile/PE friendly, dependency-light, graceful fallback.
+========================================================= */
+(() => {
+    const q = (s, r = document) => r.querySelector(s);
+    const qa = (s, r = document) => [...r.querySelectorAll(s)];
+
+    const scrollToTarget = (target) => {
+        if (!target) return;
+        const el = typeof target === "string" ? q(target) : target;
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const findSection = (name) => {
+        const normalized = String(name).toLowerCase();
+        return qa("section, main > div, [id]").find(el => {
+            const text = `${el.id || ""} ${el.className || ""} ${el.getAttribute("aria-label") || ""}`.toLowerCase();
+            return text.includes(normalized);
+        });
+    };
+
+    function setupCommandPalette() {
+        const palette = q("#siteCommandPalette");
+        const input = q("#siteCommandInput");
+        const results = q("#siteCommandResults");
+        if (!palette || !input || !results) return;
+
+        const commands = [
+            { title: "Home", icon: "fa-house", action: () => scrollToTarget("#home") },
+            { title: "Profile / About", icon: "fa-user", action: () => scrollToTarget(findSection("profile") || findSection("about")) },
+            { title: "Projects", icon: "fa-code", action: () => scrollToTarget(findSection("project")) },
+            { title: "Skills", icon: "fa-bolt", action: () => scrollToTarget(findSection("skill")) },
+            { title: "Music", icon: "fa-music", action: () => scrollToTarget(findSection("music")) },
+            { title: "Contact", icon: "fa-paper-plane", action: () => scrollToTarget(findSection("contact")) },
+            { title: "Scroll to top", icon: "fa-arrow-up", action: () => window.scrollTo({top: 0, behavior: "smooth"}) },
+            { title: "Toggle music", icon: "fa-play", action: () => q("#musicToggle, #muteBtn, [data-music-toggle]")?.click() },
+            { title: "Open Admin", icon: "fa-sliders", action: () => q("#adminLauncher")?.click() }
+        ];
+
+        let selected = 0;
+
+        const render = () => {
+            const term = input.value.trim().toLowerCase();
+            const filtered = commands.filter(c => c.title.toLowerCase().includes(term));
+            results.innerHTML = filtered.map((c, i) => `
+                <button class="site-command-item ${i === selected ? "active" : ""}" data-command-index="${i}">
+                    <span class="site-command-icon"><i class="fa-solid ${c.icon}"></i></span>
+                    <span>${c.title}</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            `).join("") || `<div class="site-command-empty">No command found</div>`;
+
+            qa(".site-command-item", results).forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const item = filtered[Number(btn.dataset.commandIndex)];
+                    if (!item) return;
+                    close();
+                    item.action();
+                });
+            });
+        };
+
+        const open = () => {
+            palette.classList.add("is-open");
+            palette.setAttribute("aria-hidden", "false");
+            input.value = "";
+            selected = 0;
+            render();
+            setTimeout(() => input.focus(), 20);
+        };
+
+        const close = () => {
+            palette.classList.remove("is-open");
+            palette.setAttribute("aria-hidden", "true");
+        };
+
+        input.addEventListener("input", () => { selected = 0; render(); });
+        input.addEventListener("keydown", (e) => {
+            const items = qa(".site-command-item", results);
+            if (e.key === "ArrowDown") { e.preventDefault(); selected = Math.min(selected + 1, items.length - 1); render(); }
+            if (e.key === "ArrowUp") { e.preventDefault(); selected = Math.max(selected - 1, 0); render(); }
+            if (e.key === "Enter") { e.preventDefault(); items[selected]?.click(); }
+        });
+
+        q("[data-command-close]", palette)?.addEventListener("click", close);
+        document.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                palette.classList.contains("is-open") ? close() : open();
+            }
+            if (e.key === "Escape") close();
+        });
+
+        // Optional visible launcher via "/" key on desktop; never hijacks typing.
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
+                e.preventDefault();
+                open();
+            }
+        });
+    }
+
+    function setupScrollProgress() {
+        const bar = q("#siteScrollProgress");
+        if (!bar) return;
+        const update = () => {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            bar.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+        };
+        window.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update);
+        update();
+    }
+
+    function setupMobileDock() {
+        const dock = q("#mobileDock");
+        if (!dock) return;
+
+        const actions = {
+            home: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+            projects: () => scrollToTarget(findSection("project")),
+            music: () => scrollToTarget(findSection("music")),
+            top: () => window.scrollTo({ top: 0, behavior: "smooth" })
+        };
+
+        qa("[data-dock-action]", dock).forEach(btn => {
+            btn.addEventListener("click", () => actions[btn.dataset.dockAction]?.());
+        });
+
+        // Hide dock while scrolling down, reveal while scrolling up.
+        let lastY = window.scrollY;
+        window.addEventListener("scroll", () => {
+            const y = window.scrollY;
+            dock.classList.toggle("dock-hidden", y > lastY && y > 100);
+            lastY = y;
+        }, { passive: true });
+    }
+
+    function setupOfflineIndicator() {
+        const badge = q("#siteOfflineBadge");
+        if (!badge) return;
+
+        const update = () => {
+            const offline = !navigator.onLine;
+            badge.hidden = !offline;
+            document.documentElement.dataset.connection = offline ? "offline" : "online";
+        };
+
+        window.addEventListener("online", update);
+        window.addEventListener("offline", update);
+        update();
+    }
+
+    function setupTouchFriendlyCards() {
+        // Prevent 3D tilt from making touch devices jittery.
+        const touch = matchMedia("(hover: none), (pointer: coarse)").matches;
+        if (!touch) return;
+
+        document.documentElement.classList.add("touch-device");
+        qa("[data-tilt], .tilt-card, .card-3d").forEach(el => {
+            el.style.transform = "none";
+            el.addEventListener("touchstart", () => el.classList.add("touch-active"), {passive:true});
+            el.addEventListener("touchend", () => el.classList.remove("touch-active"), {passive:true});
+        });
+    }
+
+    function setupExternalLinksSafety() {
+        qa('a[target="_blank"]').forEach(a => {
+            const rel = (a.getAttribute("rel") || "").split(/\s+/).filter(Boolean);
+            if (!rel.includes("noopener")) rel.push("noopener");
+            if (!rel.includes("noreferrer")) rel.push("noreferrer");
+            a.setAttribute("rel", rel.join(" "));
+        });
+    }
+
+    function setupKeyboardFocus() {
+        document.addEventListener("keydown", e => {
+            if (e.key === "Tab") document.documentElement.classList.add("keyboard-user");
+        });
+        document.addEventListener("pointerdown", () => document.documentElement.classList.remove("keyboard-user"), {passive:true});
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setupCommandPalette();
+        setupScrollProgress();
+        setupMobileDock();
+        setupOfflineIndicator();
+        setupTouchFriendlyCards();
+        setupExternalLinksSafety();
+        setupKeyboardFocus();
+    });
+})();
